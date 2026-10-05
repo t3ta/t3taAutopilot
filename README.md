@@ -81,6 +81,10 @@ Picking an entry with nothing to drive to (e.g. `Map marker (none)`) keeps the
 current destination. Picking a destination again always re-plans, even when the
 new target is next to the old one (a quest POI at the map marker still stops
 outside the POI).
+For the gyrocopter, picking a destination clears the old landing sequence.
+If it is still airborne below the flare height, it climbs straight out before
+turning toward the new target. Small automatic quest-marker updates keep the
+current landing strip when it remains suitable.
 
 - A quest marker follows the quest: the POI while it is in progress, the quest
   giver once it is ready to turn in, the dig circle for buried supplies. When
@@ -328,6 +332,15 @@ In a gyrocopter the autopilot flies instead of driving (no road routing):
 
 ### Offline simulator
 
+Run the deterministic safety regressions (no world files required):
+
+```powershell
+dotnet run --project tools/sim -c Release -- --regression
+```
+
+They cover gyrocopter taxi braking with residual thrust, explicit retargeting
+during landing, and bypass segments staying outside closed navigation cells.
+
 `tools/sim` compiles the mod's engine-independent sources
 (`RoadNetwork`, `PngRoadMask`, `RoutePlanner`, `PathFollower`, `Driver`)
 against the game's `UnityEngine.CoreModule` and drives them with a kinematic
@@ -352,7 +365,9 @@ the landing strips picked for N random destinations, `AD_GYRO=1 AD_LOITER=1` cir
 obstacles are boxes with a height: they check the pilot's take-off / climb-out
 decisions, not the game's box casts (slopes, drive-through blocks and entities
 the controller ignores). Check those in game with the `climb_detour` telemetry
-events.
+events. Short taxi trips also scan ahead and along the travel direction,
+reduce speed to allow the pusher to spin down, and stop with a
+`ground path blocked` message when there is no safe way forward.
 
 It prints per-trial and summary stats (arrival, % of distance with a wheel
 off the road mask, max cross-track error, wreck contacts) and renders route

@@ -1274,13 +1274,15 @@ namespace T3taAutopilot
             }
             Vector3 liveDest;
             PoiArea? liveArea;
+            bool explicitRetarget = false;
             if (TryGetDestination(drv, out liveDest, out liveArea) && (retargetWanted || HorizontalDist(liveDest, markerPos) > 5f))
             {
+                explicitRetarget = retargetWanted;
                 retargetWanted = false;
                 Vector3 oldLanding = landing;
                 bool onStrip = HorizontalDist(landing, destination) > 1f;   // not just the old destination
                 SetDestination(liveDest, liveArea, true);
-                if (onStrip && HorizontalDist(veh.position, oldLanding) < KeepLandingDist &&
+                if (!explicitRetarget && onStrip && HorizontalDist(veh.position, oldLanding) < KeepLandingDist &&
                     HorizontalDist(oldLanding, destination) <= LandingRadius)
                     landing = oldLanding;   // the destination moved a little: land where we were heading
                 else
@@ -1321,6 +1323,8 @@ namespace T3taAutopilot
                 pilot.ClimbScanned = false;
                 climbBatch = 0;
             }
+            if (grounded) ScanTaxiObstacles(veh, vel);
+            if (explicitRetarget) pilot.Retarget(grounded, pos.y - groundBelow);
             pilot.Cruise = FlightCruise(veh);   // mods / buffs can change it mid-flight
             var o = pilot.Step(pos, pt.forward, vel, yawRate, landing, groundBelow, topAhead, destGround,
                 grounded, Time.deltaTime);
@@ -1351,6 +1355,12 @@ namespace T3taAutopilot
             {
                 WriteFlightInput(mi, 0f, 0f, true, true);
                 Disengage(drv, "Autopilot: arrived");
+                return;
+            }
+            if (o.Blocked)
+            {
+                WriteFlightInput(mi, 0f, 0f, true, true);
+                Disengage(drv, "Autopilot: ground path blocked - take it from here");
                 return;
             }
             if (o.Landed)
@@ -1546,6 +1556,26 @@ namespace T3taAutopilot
 
             float dg;
             destGround = SurfaceAt(landing, out dg) ? dg : landing.y;
+        }
+
+        /// <summary>Taxi and landing roll-out: scan both nose and travel direction far enough to brake.</summary>
+        static void ScanTaxiObstacles(EntityVehicle veh, Vector3 vel)
+        {
+            Transform pt = veh.PhysicsTransform;
+            Vector3 feet = pt.TransformPoint(new Vector3(0f, groundY, 0f));
+            Vector3 half = new Vector3(halfWidth + ProbeSideMargin, ProbeHalfHeight, 0.05f);
+            Vector3 origin = feet + Vector3.up * ProbeHeight;
+            Vector3 nose = new Vector3(pt.forward.x, 0f, pt.forward.z);
+            Vector3 unused;
+            pilot.NoseFree = nose.sqrMagnitude > 1e-4f
+                ? Cast(veh, origin, half, nose.normalized, Quaternion.LookRotation(nose, Vector3.up),
+                    Pilot.TaxiProbeReach, out unused) : 0f;
+            Vector3 travel = new Vector3(vel.x, 0f, vel.z);
+            if (travel.sqrMagnitude > 1f)
+            {
+                pilot.NoseFree = Mathf.Min(pilot.NoseFree, Cast(veh, origin, half, travel.normalized,
+                    Quaternion.LookRotation(travel, Vector3.up), Pilot.TaxiProbeReach, out unused));
+            }
         }
 
         static readonly float[] climbFree = new float[Pilot.ClimbLevels.Length];

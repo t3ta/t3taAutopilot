@@ -44,6 +44,10 @@ namespace T3taAutopilot
         const float DescentLead = 40f;            // pitching over and building up the sink takes this far
         const float FinalSpeed = 4.5f;            // at touchdown; below ~3.6 m/s the rotor loses lift
         const float TouchdownBefore = 15f;        // aim to touch down this far short, then roll and brake
+        const float TaxiStopMargin = 3f;
+        const float TaxiDecel = 2.5f;
+        const float TaxiThrustCoast = 2f;        // allow the pusher to spin down before counting on wheel braking
+        public const float TaxiProbeReach = 20f;
         const float TaxiSpeed = 5f;               // short trips stay on the wheels
         const float TakeoffSpeed = 7f;            // no pitch-up (= wheel brake) below this on the ground
         const float TakeoffAlign = 20f;           // turn on the wheels until the nose is this close to the course
@@ -163,6 +167,8 @@ namespace T3taAutopilot
             public bool Arrived;
             /// <summary>Came to rest on something that isn't the ground (a fence, a roof edge) on the approach: stop.</summary>
             public bool Landed;
+            /// <summary>Stopped on the wheels with the way ahead blocked: hand back control.</summary>
+            public bool Blocked;
         }
 
         public void Reset()
@@ -183,6 +189,19 @@ namespace T3taAutopilot
             NoTakeoffRun = false;
             yawCmd = 0f;
             Phase = "";
+        }
+
+        /// <summary>Explicit destination pick: leave the old landing, climbing straight out first when low.</summary>
+        public void Retarget(bool grounded, float agl)
+        {
+            approaching = false;
+            LandingLong = false;
+            GoingAround = !grounded && agl < FlareHeight;
+            goArounds = 0;
+            haveGoAroundsFor = false;
+            turnBackSign = 0f;
+            detourDir = -1;
+            courseClearFor = detourBadFor = settledFor = 0f;
         }
 
         /// <param name="fwd">nose direction (3D, unit)</param>
@@ -258,7 +277,10 @@ namespace T3taAutopilot
                 // close enough to drive there (or already landed and rolling)
                 Phase = "taxi";
                 alt = pos.y;
-                wantSpeed = Mathf.Clamp(dist * 0.3f, 0f, TaxiSpeed);
+                wantSpeed = Mathf.Min(Mathf.Clamp(dist * 0.3f, 0f, TaxiSpeed),
+                    Mathf.Sqrt(TaxiDecel * TaxiDecel * TaxiThrustCoast * TaxiThrustCoast
+                        + 2f * TaxiDecel * Mathf.Max(0f, NoseFree - TaxiStopMargin))
+                        - TaxiDecel * TaxiThrustCoast);
             }
             else if (!approaching || grounded)
             {
@@ -446,6 +468,13 @@ namespace T3taAutopilot
                     brake = speed > 0.3f;
                     o.Arrived = speed < 1f;
                 }
+                if (dist >= 12f && NoseFree <= TaxiStopMargin && speed < 0.6f)
+                {
+                    o.Blocked = true;
+                    o.Throttle = o.Yaw = 0f;
+                    brake = true;
+                }
+                if (brake) o.Throttle = 0f;   // do not keep the pusher powered while braking
                 o.Up = brake;
                 o.Down = brake || pitch > 2f;   // keep the nose down: nose-up at speed lifts off
             }
