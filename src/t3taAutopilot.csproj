@@ -11,6 +11,9 @@
     <OutputPath>$(MSBuildProjectDirectory)\..\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateDependencyFile>false</GenerateDependencyFile>
+    <!-- Keep the local checkout path out of the DLL / PDB -->
+    <EnableSourceLink>false</EnableSourceLink>
+    <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..'))=/_</PathMap>
     <!-- Game install dir; override with -p:GameDir="..." if installed elsewhere -->
     <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die</GameDir>
   </PropertyGroup>

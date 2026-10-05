@@ -432,6 +432,10 @@ Set `-p:GameDir="..."` to override the Steam install path used for references.
   splatmap only — a tree or wreck on it isn't known. Without the world files
   (remote server) it cruises 45 m above the measured ground and lands at the
   destination.
+- Gyrocopter: the circle flown while a destination is picked in the air isn't
+  checked for obstacles. It holds its height (at least 30 m over the ground
+  right below) on a ~45 m radius, so open the menu with room around, clear of
+  tall buildings and cliffs.
 - If the engine stalls (no fuel / broken), the autopilot holds the brake — start
   the engine manually.
 
