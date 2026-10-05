@@ -17,7 +17,8 @@ namespace AutopilotSim
                 TakeoffStillStopsInWalledYard, RetargetLeavesLongLandingSafely,
                 RetargetLeavesGoAround, MarkerUpdateKeepsLongLanding,
                 BypassAvoidsClosedRectangle, ClosedTargetIsRejected,
-                DiagonalGapIsRejected, BypassReopensCellsBehindVehicle
+                DiagonalGapIsRejected, BoundaryStartIsRejected, BoundaryTargetIsRejected,
+                BypassReopensCellsBehindVehicle
             };
             int failed = 0;
             foreach (var test in cases)
@@ -211,6 +212,24 @@ namespace AutopilotSim
             for (int i = 0; i < net.Cells.Length; i++) if (i != start && i != target) blocked.Add(i);
             var path = RoutePlanner.FindPath(net, net.CellToWorld(16, 16), net.CellToWorld(17, 17), 1, 12, 1.6f, blocked);
             Require(path == null, "diagonal corner between closed cells must not be traversed");
+        }
+
+        static void BoundaryStartIsRejected()
+        {
+            var net = Net();
+            net.WorldToCell(-1, 1, out int x, out int y);
+            var path = RoutePlanner.FindPath(net, new Vector3(0, 0, 1), new Vector3(20, 0, 20), 1, 12, 1.6f,
+                new HashSet<int> { y * net.CellsX + x });
+            Require(path == null, "start on a shared edge touches the closed neighboring cell");
+        }
+
+        static void BoundaryTargetIsRejected()
+        {
+            var net = Net();
+            net.WorldToCell(-1, 1, out int x, out int y);
+            var path = RoutePlanner.FindPath(net, new Vector3(20, 0, 20), new Vector3(0, 0, 1), 1, 12, 1.6f,
+                new HashSet<int> { y * net.CellsX + x });
+            Require(path == null, "target on a shared edge touches the closed neighboring cell");
         }
 
         static void BypassReopensCellsBehindVehicle()

@@ -351,6 +351,9 @@ namespace T3taAutopilot
                 !net.WorldToCell(b.x, b.z, out int endX, out int endY)) return false;
             float gx = (a.x + net.WorldW * 0.5f) / net.CellSize;
             float gy = (a.z + net.WorldH * 0.5f) / net.CellSize;
+            float bx = (b.x + net.WorldW * 0.5f) / net.CellSize;
+            float by = (b.z + net.WorldH * 0.5f) / net.CellSize;
+            if (!PointClear(net, gx, gy, blocked) || !PointClear(net, bx, by, blocked)) return false;
             float dx = (b.x - a.x) / net.CellSize, dy = (b.z - a.z) / net.CellSize;
             int stepX = dx > 0f ? 1 : dx < 0f ? -1 : 0;
             int stepY = dy > 0f ? 1 : dy < 0f ? -1 : 0;
@@ -360,7 +363,12 @@ namespace T3taAutopilot
             float nextY = stepY == 0 ? float.PositiveInfinity : (stepY > 0 ? y + 1f - gy : gy - y) * deltaY;
             for (;;)
             {
-                if (blocked.Contains(y * net.CellsX + x)) return false;
+                // A segment lying along a grid edge touches both rows/columns.
+                bool edgeX = stepX == 0 && gx == x, edgeY = stepY == 0 && gy == y;
+                if (!CellClear(net, x, y, blocked) ||
+                    (edgeX && !CellClear(net, x - 1, y, blocked)) ||
+                    (edgeY && !CellClear(net, x, y - 1, blocked)) ||
+                    (edgeX && edgeY && !CellClear(net, x - 1, y - 1, blocked))) return false;
                 if (x == endX && y == endY) return true;
                 if (x == endX) { y += stepY; nextY += deltaY; }
                 else if (y == endY) { x += stepX; nextX += deltaX; }
@@ -374,6 +382,23 @@ namespace T3taAutopilot
                 else if (nextX < nextY) { x += stepX; nextX += deltaX; }
                 else { y += stepY; nextY += deltaY; }
             }
+        }
+
+        static bool PointClear(RoadNetwork net, float gx, float gy, HashSet<int> blocked)
+        {
+            int x = Mathf.FloorToInt(gx), y = Mathf.FloorToInt(gy);
+            bool edgeX = gx == x, edgeY = gy == y;
+            return CellClear(net, x, y, blocked) &&
+                (!edgeX || CellClear(net, x - 1, y, blocked)) &&
+                (!edgeY || CellClear(net, x, y - 1, blocked)) &&
+                (!(edgeX && edgeY) || CellClear(net, x - 1, y - 1, blocked));
+        }
+
+        static bool CellClear(RoadNetwork net, int x, int y, HashSet<int> blocked)
+        {
+            // Neighbors beyond the world edge are not navigation cells.
+            return x < 0 || y < 0 || x >= net.CellsX || y >= net.CellsY ||
+                !blocked.Contains(y * net.CellsX + x);
         }
 
         /// <summary>
