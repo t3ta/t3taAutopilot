@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+    <!--
+        Destination list (window group "t3taAutopilotDestinations", registered in xui.xml),
+        opened from the destination radial's "List" entry. cursor_area="true" gives a mouse cursor
+        and locks movement/look. Rows are filled by T3taAutopilot.XUiC_AutopilotDestinations: 8 per
+        page, tabs filter by kind, "Go" drives there, the star bookmarks the row (bookmarks come
+        first and have their own tab).
+    -->
+    <append xpath="/windows">
+        <window name="windowT3taAutopilotDestinations" width="640" height="530" panel="Center"
+                controller="T3taAutopilot.XUiC_AutopilotDestinations, t3taAutopilot" cursor_area="true">
+            <panel name="content" depth="50" pos="0,0" width="640" height="530" disableautobackground="true">
+                <sprite depth="50" sprite="menu_empty3px" pos="0,0" width="640" height="530" color="[black]" type="sliced" fillcenter="true" />
+
+                <panel name="header" pos="0,0" height="43" depth="51" disableautobackground="true">
+                    <sprite depth="51" sprite="ui_game_panel_header" width="640" height="43" />
+                    <sprite depth="52" style="icon32px" pos="4,-5" sprite="ui_game_symbol_drive" />
+                    <label depth="52" pos="42,-6" width="560" height="32" text="Autopilot destinations" font_size="26" justify="left" effect="outline" upper_case="true" />
+                </panel>
+
+                <simplebutton name="btnTabAll"       depth="52" pos="12,-50"  width="150" height="34" caption="All"       font_size="18" />
+                <simplebutton name="btnTabQuests"    depth="52" pos="168,-50" width="150" height="34" caption="Quests"    font_size="18" />
+                <simplebutton name="btnTabWaypoints" depth="52" pos="324,-50" width="150" height="34" caption="Waypoints" font_size="18" />
+                <simplebutton name="btnTabBookmarks" depth="52" pos="480,-50" width="148" height="34" caption="Bookmarks" font_size="18" />
+
+                <label name="emptyLabel" depth="52" pos="20,-250" width="600" height="40" text="Nothing to drive to." font_size="20" color="[lightGrey]" justify="center" />
+
+                <panel name="row0" depth="51" pos="12,-92" width="616" height="42" disableautobackground="true">
+                    <sprite name="row0_bg" depth="51" sprite="menu_empty3px" pos="0,0" width="616" height="42" color="[darkGrey]" type="sliced" fillcenter="true" />
+                    <sprite name="row0_icon" depth="52" style="icon32px" pos="6,-5" sprite="ui_game_symbol_quest" />
+                    <label name="row0_name" depth="52" pos="46,-2" width="424" height="22" text="" font_size="18" justify="left" />
+                    <label name="row0_meta" depth="52" pos="46,-23" width="424" height="18" text="" font_size="15" color="[lightGrey]" justify="left" />
+                    <button name="row0_star" depth="53" style="press, hover" pos="478,-7" size="28,28" sprite="server_favorite" defaultcolor="[mediumGrey]" hovercolor="[white]" selectedcolor="255,210,60,255" tooltip="Bookmark" />
+                    <simplebutton name="row0_go" depth="53" pos="520,-5" width="90" height="32" caption="Go" font_size="18" />
+                </panel>
+                <panel name="row1" depth="51" pos="12,-138" width="616" height="42" disableautobackground="true">
+                    <sprite name="row1_bg" depth="51" sprite="menu_empty3px" pos="0,0" width="616" height="42" color="[darkGrey]" type="sliced" fillcenter="true" />
+                    <sprite name="row1_icon" depth="52" style="icon32px" pos="6,-5" sprite="ui_game_symbol_quest" />
+                    <label name="row1_name" depth="52" pos="46,-2" width="424" height="22" text="" font_size="18" justify="left" />
+                    <label name="row1_meta" depth="52" pos="46,-23" width="424" height="18" text="" font_size="15" color="[lightGrey]" justify="left" />
+                    <button name="row1_star" depth="53" style="press, hover" pos="478,-7" size="28,28" sprite="server_favorite" defaultcolor="[mediumGrey]" hovercolor="[white]" selectedcolor="255,210,60,255" tooltip="Bookmark" />
+                    <simplebutton name="row1_go" depth="53" pos="520,-5" width="90" height="32" caption="Go" font_size="18" />
+                </panel>
+                <panel name="row2" depth="51" pos="12,-184" width="616" height="42" disableautobackground="true">
+                    <sprite name="row2_bg" depth="51" sprite="menu_empty3px" pos="0,0" width="616" height="42" color="[darkGrey]" type="sliced" fillcenter="true" />
+                    <sprite name="row2_icon" depth="52" style="icon32px" pos="6,-5" sprite="ui_game_symbol_quest" />
+                    <label name="row2_name" depth="52" pos="46,-2" width="424" height="22" text="" font_size="18" justify="left" />
+                    <label name="row2_meta" depth="52" pos="46,-23" width="424" height="18" text="" font_size="15" color="[lightGrey]" justify="left" />
+                    <button name="row2_star" depth="53" style="press, hover" pos="478,-7" size="28,28" sprite="server_favorite" defaultcolor="[mediumGrey]" hovercolor="[white]" selectedcolor="255,210,60,255" tooltip="Bookmark" />
+                    <simplebutton name="row2_go" depth="53" pos="520,-5" width="90" height="32" caption="Go" font_size="18" />
+                </panel>
+                <panel name="row3" depth="51" pos="12,-230" width="616" height="42" disableautobackground="true">
+                    <sprite name="row3_bg" depth="51" sprite="menu_empty3px" pos="0,0" width="616" height="42" color="[darkGrey]" type="sliced" fillcenter="true" />
+                    <sprite name="row3_icon" depth="52" style="icon32px" pos="6,-5" sprite="ui_game_symbol_quest" />
+                    <label name="row3_name" depth="52" pos="46,-2" width="424" height="22" text="" font_size="18" justify="left" />
+                    <label name="row3_meta" depth="52" pos="46,-23" width="424" height="18" text="" font_size="15" color="[lightGrey]" justify="left" />
+                    <button name="row3_star" depth="53" style="press, hover" pos="478,-7" size="28,28" sprite="server_favorite" defaultcolor="[mediumGrey]" hovercolor="[white]" selectedcolor="255,210,60,255" tooltip="Bookmark" />
+                    <simplebutton name="row3_go" depth="53" pos="520,-5" width="90" height="32" caption="Go" font_size="18" />
+                </panel>
+                <panel name="row4" depth="51" pos="12,-276" width="616" height="42" disableautobackground="true">
+                    <sprite name="row4_bg" depth="51" sprite="menu_empty3px" pos="0,0" width="616" height="42" color="[darkGrey]" type="sliced" fillcenter="true" />
+                    <sprite name="row4_icon" depth="52" style="icon32px" pos="6,-5" sprite="ui_game_symbol_quest" />
+                    <label name="row4_name" depth="52" pos="46,-2" width="424" height="22" text="" font_size="18" justify="left" />
+                    <label name="row4_meta" depth="52" pos="46,-23" width="424" height="18" text="" font_size="15" color="[lightGrey]" justify="left" />
+                    <button name="row4_star" depth="53" style="press, hover" pos="478,-7" size="28,28" sprite="server_favorite" defaultcolor="[mediumGrey]" hovercolor="[white]" selectedcolor="255,210,60,255" tooltip="Bookmark" />
+                    <simplebutton name="row4_go" depth="53" pos="520,-5" width="90" height="32" caption="Go" font_size="18" />
+                </panel>
+                <panel name="row5" depth="51" pos="12,-322" width="616" height="42" disableautobackground="true">
+                    <sprite name="row5_bg" depth="51" sprite="menu_empty3px" pos="0,0" width="616" height="42" color="[darkGrey]" type="sliced" fillcenter="true" />
+                    <sprite name="row5_icon" depth="52" style="icon32px" pos="6,-5" sprite="ui_game_symbol_quest" />
+                    <label name="row5_name" depth="52" pos="46,-2" width="424" height="22" text="" font_size="18" justify="left" />
+                    <label name="row5_meta" depth="52" pos="46,-23" width="424" height="18" text="" font_size="15" color="[lightGrey]" justify="left" />
+                    <button name="row5_star" depth="53" style="press, hover" pos="478,-7" size="28,28" sprite="server_favorite" defaultcolor="[mediumGrey]" hovercolor="[white]" selectedcolor="255,210,60,255" tooltip="Bookmark" />
+                    <simplebutton name="row5_go" depth="53" pos="520,-5" width="90" height="32" caption="Go" font_size="18" />
+                </panel>
+                <panel name="row6" depth="51" pos="12,-368" width="616" height="42" disableautobackground="true">
+                    <sprite name="row6_bg" depth="51" sprite="menu_empty3px" pos="0,0" width="616" height="42" color="[darkGrey]" type="sliced" fillcenter="true" />
+                    <sprite name="row6_icon" depth="52" style="icon32px" pos="6,-5" sprite="ui_game_symbol_quest" />
+                    <label name="row6_name" depth="52" pos="46,-2" width="424" height="22" text="" font_size="18" justify="left" />
+                    <label name="row6_meta" depth="52" pos="46,-23" width="424" height="18" text="" font_size="15" color="[lightGrey]" justify="left" />
+                    <button name="row6_star" depth="53" style="press, hover" pos="478,-7" size="28,28" sprite="server_favorite" defaultcolor="[mediumGrey]" hovercolor="[white]" selectedcolor="255,210,60,255" tooltip="Bookmark" />
+                    <simplebutton name="row6_go" depth="53" pos="520,-5" width="90" height="32" caption="Go" font_size="18" />
+                </panel>
+                <panel name="row7" depth="51" pos="12,-414" width="616" height="42" disableautobackground="true">
+                    <sprite name="row7_bg" depth="51" sprite="menu_empty3px" pos="0,0" width="616" height="42" color="[darkGrey]" type="sliced" fillcenter="true" />
+                    <sprite name="row7_icon" depth="52" style="icon32px" pos="6,-5" sprite="ui_game_symbol_quest" />
+                    <label name="row7_name" depth="52" pos="46,-2" width="424" height="22" text="" font_size="18" justify="left" />
+                    <label name="row7_meta" depth="52" pos="46,-23" width="424" height="18" text="" font_size="15" color="[lightGrey]" justify="left" />
+                    <button name="row7_star" depth="53" style="press, hover" pos="478,-7" size="28,28" sprite="server_favorite" defaultcolor="[mediumGrey]" hovercolor="[white]" selectedcolor="255,210,60,255" tooltip="Bookmark" />
+                    <simplebutton name="row7_go" depth="53" pos="520,-5" width="90" height="32" caption="Go" font_size="18" />
+                </panel>
+
+                <simplebutton name="btnPrev"  depth="52" pos="12,-476"  width="44" height="40" caption="&lt;" font_size="20" />
+                <label name="pageLabel"       depth="52" pos="60,-480"  width="100" height="32" text="" font_size="20" justify="center" />
+                <simplebutton name="btnNext"  depth="52" pos="164,-476" width="44" height="40" caption="&gt;" font_size="20" />
+                <simplebutton name="btnClose" depth="52" pos="478,-476" width="150" height="40" caption="Close" font_size="20" />
+            </panel>
+        </window>
+    </append>
+</config>

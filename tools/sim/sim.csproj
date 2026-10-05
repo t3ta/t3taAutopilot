@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Offline test bench for the autopilot's routing + path-following logic.
+    Compiles the mod's engine-independent sources against the game's
+    UnityEngine.CoreModule (math structs only) and drives a kinematic
+    vehicle model that mimics EntityVehicle's speed-dependent steering rate.
+    Usage: dotnet run -c Release [worldDir] [trials] [seed]
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>CA1416;MSB3277</NoWarn>
+    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die</GameDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\RoadNetwork.cs" Link="Mod\RoadNetwork.cs" />
+    <Compile Include="..\..\src\RoadNetwork.Terrain.cs" Link="Mod\RoadNetwork.Terrain.cs" />
+    <Compile Include="..\..\src\RoadNetwork.Prefabs.cs" Link="Mod\RoadNetwork.Prefabs.cs" />
+    <Compile Include="..\..\src\RoutePlanner.cs" Link="Mod\RoutePlanner.cs" />
+    <Compile Include="..\..\src\PathFollower.cs" Link="Mod\PathFollower.cs" />
+    <Compile Include="..\..\src\PngRoadMask.cs" Link="Mod\PngRoadMask.cs" />
+    <Compile Include="..\..\src\Driver.cs" Link="Mod\Driver.cs" />
+    <Compile Include="..\..\src\Pilot.cs" Link="Mod\Pilot.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="9.0.0" />
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(GameDir)\7DaysToDie_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

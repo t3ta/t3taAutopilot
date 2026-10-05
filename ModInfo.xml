@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xml>
+	<Name value="t3taAutopilot" />
+	<DisplayName value="t3ta Autopilot" />
+	<Description value="Gyrocopter autopilot. Track a waypoint on the map, then press G in the driver's seat to fly there and land. Ground vehicles: experimental, off by default." />
+	<Author value="t3ta" />
+	<Version value="1.0.0" />
+	<Website value="https://github.com/t3ta/t3taAutopilot" />
+	<SkipWithAntiCheat value="true" />
+</xml>

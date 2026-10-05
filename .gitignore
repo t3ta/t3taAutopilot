@@ -1,0 +1,33 @@
+# Build output
+bin/
+obj/
+[Bb]uild/
+[Dd]ist/
+*.dll
+*.pdb
+*.mdb
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local game / decompiled assemblies
+game/
+assemblies/
+decompiled/
+references/local/
+
+# Generated world data and large runtime artifacts
+GeneratedWorlds/
+Saves/
+logs/
+tmp/
+tools/analysis/

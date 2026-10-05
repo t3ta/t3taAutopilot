@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+    <!-- The destination list window group, opened from code with
+         windowManager.Open("t3taAutopilotDestinations", ...). The controller must be a real public
+         XUiController subclass or the group is dropped. -->
+    <append xpath="/xui">
+        <window_group name="t3taAutopilotDestinations" controller="T3taAutopilot.XUiC_AutopilotDestinationsGroup, t3taAutopilot" close_compass_on_open="true">
+            <window name="windowT3taAutopilotDestinations" />
+        </window_group>
+    </append>
+</config>
