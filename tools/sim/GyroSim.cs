@@ -240,6 +240,8 @@ namespace AutopilotSim
             // starts inside the approach distance while still on the ground
             Scenario("downhill departure, dest behind", -400f, (x, z) => Mathf.Abs(z) < 60f ? 100f : 0f);
             Scenario("short hop 80 m", 80f, (x, z) => 0f);
+            Scenario("short taxi blocked by wall", 80f, (x, z) => 0f, -1f,
+                new[] { new Obstacle(-20f, 80f, 18f, 22f, 5f) });
             // the recorded flight: cruise at 150 m (route top 100 + 50) over flat ground, land
             Scenario("high cruise 150 m then land", 1500f, (x, z) => 0f, 100f);
             // a longer trip: where a higher speed cap (AD_VEL_PER) pays off
@@ -413,6 +415,17 @@ namespace AutopilotSim
             p.ClimbScanned = true;
         }
 
+        static float TaxiFree(GyroSim g, Obstacle[] obs, Vector3 dir)
+        {
+            for (float d = 0.5f; d <= Pilot.TaxiProbeReach; d += 0.5f)
+            {
+                Vector3 q = g.Pos + dir * d;
+                foreach (var o in obs)
+                    if (o.Top > g.Pos.y + 0.6f && o.Covers(q.x, q.z, BodyPad)) return d;
+            }
+            return Pilot.TaxiProbeReach;
+        }
+
         static float SweepNeed(GyroSim g, Obstacle[] obs, Vector3 dir)
         {
             float roll = Pilot.TakeoffRoll(g.Grounded, g.Vel, dir);
@@ -445,6 +458,7 @@ namespace AutopilotSim
             bool near = false;
             int obstacleHits = 0;
             bool noRun = false;
+            bool taxiBlocked = false;
             bool inObstacle = false;
             float maxDetour = 0f;
             int detourSwitches = 0;   // take-off / climb-out heading changes (recorded: 12 in 4 s after lift-off, then a hit)
@@ -494,9 +508,17 @@ namespace AutopilotSim
                     if (step % 12 == 0) ScanClimbOut(p, g, obs, dest);   // every 0.24 s
                 }
                 else p.ClimbScanned = false;
+                if (g.Grounded)
+                {
+                    Vector3 nose = new Vector3(g.Fwd.x, 0f, g.Fwd.z).normalized;
+                    p.NoseFree = TaxiFree(g, obs, nose);
+                    Vector3 travel = new Vector3(g.Vel.x, 0f, g.Vel.z);
+                    if (travel.sqrMagnitude > 1f) p.NoseFree = Mathf.Min(p.NoseFree, TaxiFree(g, obs, travel.normalized));
+                }
                 var o = p.Step(g.Pos, g.Fwd, velM, yawDeg, dest, ground(g.Pos.x, g.Pos.z), top,
                     ground(dest.x, dest.z), g.Grounded, Dt);
                 if (o.Arrived) { arrived = true; break; }
+                if (o.Blocked) { taxiBlocked = true; break; }
                 if (p.NoTakeoffRun) { noRun = true; break; }   // the controller disengages here
                 g.Step(o.Throttle, o.Yaw, o.Up, o.Down);
                 float clear = g.Pos.y - ground(g.Pos.x, g.Pos.z);
@@ -556,7 +578,7 @@ namespace AutopilotSim
                               (obs.Length > 0 ? $", obstacle hits {obstacleHits}, max detour {maxDetour:F0} deg, detour switches {detourSwitches}" : "") +
                               $", near dest: low turn max {lowTurn:F0} deg/s, drift max {drift:F0} m" +
                               $", ground yaw reversals {groundReversals}, go-arounds {goArounds}" +
-                              (noRun ? $", STOPPED: no take-off run at {t:F1}s, moved {new Vector3(g.Pos.x, 0f, g.Pos.z).magnitude:F1} m" : "") + trace);
+                              (taxiBlocked ? $", STOPPED: ground path blocked at {t:F1}s" : noRun ? $", STOPPED: no take-off run at {t:F1}s, moved {new Vector3(g.Pos.x, 0f, g.Pos.z).magnitude:F1} m" : "") + trace);
         }
     }
 }

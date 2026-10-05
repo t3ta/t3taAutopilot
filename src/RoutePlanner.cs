@@ -52,7 +52,7 @@ namespace T3taAutopilot
             List<int> cells = FindCells(net, from, to, roadCost, offRoadCost, flatOffRoadCost,
                 blocked != null && blocked.Count > 0 ? blocked : null, out _);
             if (cells == null) return null;
-            return BuildPolyline(net, cells, from, to, true);
+            return BuildPolyline(net, cells, from, to, true, blocked);
         }
 
         const float BypassOffRoadCost = 2f;     // cheap: leaving the road IS the plan here
@@ -110,10 +110,11 @@ namespace T3taAutopilot
             // not reaching the rejoin point used to still append it, and the
             // straight tail ran through the very wall we were avoiding
             if (cells == null || !reached) return null;
-            var head = BuildPolyline(net, cells, pos, rejoin, false);
+            var head = BuildPolyline(net, cells, pos, rejoin, false, closed);
+            if (head == null) return null;
             var tail = main.Tail(rejoinS);
             for (int i = 1; i < tail.Count; i++) head.Add(tail[i]);
-            return head;
+            return PathClear(net, head, closed) ? head : null;
         }
 
         static bool NearBlocked(RoadNetwork net, Vector3 p, float radius, HashSet<int> blocked)
@@ -184,7 +185,12 @@ namespace T3taAutopilot
                     if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
                     int ni = ny * W + nx;
                     if (state[ni] == 2) continue;
-                    if (blocked != null && ni != target && blocked.Contains(ni)) continue;
+                    if (blocked != null)
+                    {
+                        if (blocked.Contains(ni)) continue;
+                        // A diagonal cannot squeeze between two closed cell corners.
+                        if (d >= 4 && (blocked.Contains(cy * W + nx) || blocked.Contains(ny * W + cx))) continue;
+                    }
                     byte cls = net.Cells[ni];
                     float cellMul = cls == RoadNetwork.CellOffRoad
                         ? (terrain != null ? flatOffRoadCost * terrain[ni] * 0.25f : offRoadCost)
@@ -265,18 +271,25 @@ namespace T3taAutopilot
         /// </summary>
         /// <param name="center">pull points onto the road centerline (off for
         /// detours: centering would drag them back into the closed stretch)</param>
-        static List<Vector3> BuildPolyline(RoadNetwork net, List<int> cells, Vector3 from, Vector3 to, bool center)
+        static List<Vector3> BuildPolyline(RoadNetwork net, List<int> cells, Vector3 from, Vector3 to, bool center,
+            HashSet<int> blocked = null)
         {
             int W = net.CellsX;
             var raw = new List<Vector3>(cells.Count + 2);
             raw.Add(Flat(from));
-            for (int i = 1; i < cells.Count - 1; i++)
+            // With closed cells, keep the endpoint cell centers too: replacing
+            // them by off-center coordinates can cut across a closed neighbor.
+            bool guarded = blocked != null && blocked.Count > 0;
+            for (int i = guarded ? 0 : 1; i < cells.Count - (guarded ? 0 : 1); i++)
             {
                 raw.Add(net.CellToWorld(cells[i] % W, cells[i] / W));
             }
             raw.Add(Flat(to));
 
+            if (!PathClear(net, raw, blocked)) return null;
             var pts = Resample(raw, Spacing);
+            // Resampling can shortcut a corner between its output points.
+            if (!PathClear(net, pts, blocked)) return raw;
             if (pts.Count < 5) return pts;
 
             // keep the exact start/end: the vehicle and the marker may be off-road
@@ -300,7 +313,7 @@ namespace T3taAutopilot
 
             // moving-average smoothing: removes the grid staircase and
             // centering jitter while keeping the endpoints pinned
-            var a = shifted;
+            var a = PathClear(net, shifted, blocked) ? shifted : pts.ToArray();
             var b = new Vector3[a.Length];
             for (int pass = 0; pass < 4; pass++)
             {
@@ -313,9 +326,54 @@ namespace T3taAutopilot
                     for (int k = lo; k <= hi; k++) sum += a[k];
                     b[i] = sum / (hi - lo + 1);
                 }
+                if (!PathClear(net, b, blocked)) break;
                 var tmp = a; a = b; b = tmp;
             }
-            return Resample(new List<Vector3>(a), Spacing);
+            var result = Resample(new List<Vector3>(a), Spacing);
+            return PathClear(net, result, blocked) ? result : new List<Vector3>(a);
+        }
+
+        static bool PathClear(RoadNetwork net, IList<Vector3> path, HashSet<int> blocked)
+        {
+            if (blocked == null || blocked.Count == 0) return true;
+            for (int i = 0; i < path.Count; i++)
+            {
+                if (!SegmentClear(net, path[i > 0 ? i - 1 : 0], path[i], blocked)) return false;
+            }
+            return true;
+        }
+
+        // Traverse every grid cell touched by the segment, including both
+        // neighbors when it passes exactly through a corner (supercover DDA).
+        static bool SegmentClear(RoadNetwork net, Vector3 a, Vector3 b, HashSet<int> blocked)
+        {
+            if (!net.WorldToCell(a.x, a.z, out int x, out int y) ||
+                !net.WorldToCell(b.x, b.z, out int endX, out int endY)) return false;
+            float gx = (a.x + net.WorldW * 0.5f) / net.CellSize;
+            float gy = (a.z + net.WorldH * 0.5f) / net.CellSize;
+            float dx = (b.x - a.x) / net.CellSize, dy = (b.z - a.z) / net.CellSize;
+            int stepX = dx > 0f ? 1 : dx < 0f ? -1 : 0;
+            int stepY = dy > 0f ? 1 : dy < 0f ? -1 : 0;
+            float deltaX = stepX == 0 ? float.PositiveInfinity : 1f / Mathf.Abs(dx);
+            float deltaY = stepY == 0 ? float.PositiveInfinity : 1f / Mathf.Abs(dy);
+            float nextX = stepX == 0 ? float.PositiveInfinity : (stepX > 0 ? x + 1f - gx : gx - x) * deltaX;
+            float nextY = stepY == 0 ? float.PositiveInfinity : (stepY > 0 ? y + 1f - gy : gy - y) * deltaY;
+            for (;;)
+            {
+                if (blocked.Contains(y * net.CellsX + x)) return false;
+                if (x == endX && y == endY) return true;
+                if (x == endX) { y += stepY; nextY += deltaY; }
+                else if (y == endY) { x += stepX; nextX += deltaX; }
+                else if (Mathf.Abs(nextX - nextY) < 1e-6f)
+                {
+                    if (blocked.Contains(y * net.CellsX + x + stepX) ||
+                        blocked.Contains((y + stepY) * net.CellsX + x)) return false;
+                    x += stepX; y += stepY;
+                    nextX += deltaX; nextY += deltaY;
+                }
+                else if (nextX < nextY) { x += stepX; nextX += deltaX; }
+                else { y += stepY; nextY += deltaY; }
+            }
         }
 
         /// <summary>

@@ -100,6 +100,7 @@ namespace AutopilotSim
 
         static int Main(string[] args)
         {
+            if (args.Length > 0 && args[0] == "--regression") return RegressionTests.Run();
             if (Environment.GetEnvironmentVariable("AD_GYRO") != null)
             {
                 GyroSim.Run();
